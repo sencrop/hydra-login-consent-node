@@ -18,7 +18,7 @@ jobs:
     secrets: inherit
     with:
       cache_docker_layers: true
-      image_name: factory-connector
+      image_name: hydra-login-consent-node
       image_tag: ${{ github.run_id }}
       cpu_architecture: arm64
 
@@ -32,6 +32,6 @@ jobs:
     uses: sencrop/github-workflows/.github/workflows/docker-tag-v1.yml@master
     secrets: inherit
     with:
-      image_name: factory-connector
+      image_name: hydra-login-consent-node
       image_tag_from: ${{ github.run_id }}
       image_tag_to: ${{ needs.version.outputs.version }}
