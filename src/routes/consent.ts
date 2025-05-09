@@ -36,13 +36,29 @@ router.get("/", csrfProtection, (req, res, next) => {
       consentChallenge: challenge,
     })
     // This will be called if the HTTP request was successful
-    .then((consentRequest) => {
+    .then(async (consentRequest) => {
       // If a user has granted this application the requested scope, hydra will tell us to not show the UI.
       // Any cast needed because the SDK changes are still unreleased.
       // TODO: Remove in a later version.
       if (consentRequest.skip || (consentRequest.client as any)?.skip_consent) {
         // You can apply logic here, for example grant another scope, or do whatever...
         // ...
+
+        // the built image will be used only in local
+        const kratosAdminUrl = "http://kratos:4434/admin"
+
+        const identityId = consentRequest.subject
+
+        // fetch the identity from kratos
+        const response = await fetch(
+          `${kratosAdminUrl}/identities/${identityId}`,
+        )
+        if (!response.ok) {
+          throw new Error(`Failed to fetch identity: ${response.statusText}`)
+        }
+
+        const identity = await response.json()
+        const userEmail = identity.traits?.email
 
         // Now it's time to grant the consent request. You could also deny the request if something went terribly wrong
         return hydraAdmin
@@ -58,12 +74,22 @@ router.get("/", csrfProtection, (req, res, next) => {
                 consentRequest.requested_access_token_audience,
 
               // The session allows us to set session data for id and access tokens
+              // @ts-ignore
               session: {
                 // This data will be available when introspecting the token. Try to avoid sensitive information here,
                 // unless you limit who can introspect tokens.
                 // accessToken: { foo: 'bar' },
                 // This data will be available in the ID token.
-                // idToken: { baz: 'bar' },
+                id_token: {
+                  // Add email to id_token if email scope is requested
+                  ...(Array.isArray(consentRequest.requested_scope) &&
+                  consentRequest.requested_scope.includes("email")
+                    ? {
+                        email: userEmail,
+                      }
+                    : {}),
+                  // other custom claims here
+                },
               },
             },
           })
