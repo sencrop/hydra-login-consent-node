@@ -20,6 +20,7 @@ jobs:
       cache_docker_layers: true
       image_name: hydra-login-consent-node
       image_tag: ${{ github.run_id }}
+      cpu_architecture: x86_64
 
   version:
     uses: sencrop/github-workflows/.github/workflows/version-v3.yml@master
