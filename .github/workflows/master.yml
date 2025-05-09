@@ -1,0 +1,37 @@
+---
+name: Deploy docker image to ECR
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - README.md
+      - devenv.*
+
+env:
+  AWS_DEFAULT_REGION: eu-central-1
+
+jobs:
+  image:
+    uses: sencrop/github-workflows/.github/workflows/docker-push-v4.yml@master
+    secrets: inherit
+    with:
+      cache_docker_layers: true
+      image_name: factory-connector
+      image_tag: ${{ github.run_id }}
+      cpu_architecture: arm64
+
+  version:
+    uses: sencrop/github-workflows/.github/workflows/version-v3.yml@master
+    with:
+      from: sha
+
+  tag-image:
+    needs: [version, image]
+    uses: sencrop/github-workflows/.github/workflows/docker-tag-v1.yml@master
+    secrets: inherit
+    with:
+      image_name: factory-connector
+      image_tag_from: ${{ github.run_id }}
+      image_tag_to: ${{ needs.version.outputs.version }}
